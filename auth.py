@@ -1,45 +1,61 @@
 from fastapi import APIRouter, HTTPException
 from curd import get_user, create_user
 from security import hash_password, verify_password, create_token
+from schemas import UserRegister, UserLogin
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+
 @router.post("/register")
-def register(username: str, password: str, is_admin: bool = False):
+def register(data: UserRegister):
     """
-    Register a new user.
-    Password can be any length (SHA256 → bcrypt handles it).
+    Register user with role: admin / worker / client
     """
-    # Check if user exists
-    if get_user(username):
-        raise HTTPException(status_code=400, detail="User already exists")
 
-    # Hash the password safely
-    hashed = hash_password(password)  # SHA256 -> bcrypt inside security.py
-    create_user(username, hashed, is_admin)
+    if get_user(data.username):
+        raise HTTPException(
+            status_code=400,
+            detail="User already exists"
+        )
 
-    return {"message": "User registered successfully"}
+    hashed_password = hash_password(data.password)
+
+    create_user(
+        username=data.username,
+        password=hashed_password,
+        role=data.role
+    )
+
+    return {
+        "message": "User registered successfully",
+        "role": data.role
+    }
+
 
 @router.post("/login")
-def login(username: str, password: str):
+def login(data: UserLogin):
     """
-    Login user and return JWT token
+    Login and return JWT token with role
     """
-    user = get_user(username)
+
+    user = get_user(data.username)
+
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # Verify password (SHA256 -> bcrypt inside security.py)
-    if not verify_password(password, user["password"]):
+    if not verify_password(data.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # Create JWT token
     token = create_token({
         "sub": user["username"],
-        "is_admin": user["is_admin"]
+        "role": user["role"]
     })
 
     return {
         "access_token": token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "role": user["role"]
     }
+
+
+print("Auth router loaded")

@@ -23,3 +23,8 @@ def scrape_and_save(current_user: dict = Depends(get_current_user)):
 @router.get("/")
 def list_books():
     return get_books()
+
+
+
+
+

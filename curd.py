@@ -32,10 +32,10 @@ def get_books():
     books = []
     for row in rows:
         books.append({
-            "id": row["id"],
-            "title": row["title"],
-            "price": row["price"],
-            "rating": row["rating"],
+            "id": row[0],
+            "title": row[1],
+            "price": row[2],
+            "rating": row[3],
         })
 
     cursor.close()
@@ -53,10 +53,9 @@ def get_user(username: str):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT id, username, password, is_admin FROM users WHERE username = %s",
+        "SELECT id, username, password, role FROM users WHERE username = %s",
         (username,)
     )
-
     row = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -64,23 +63,27 @@ def get_user(username: str):
     if not row:
         return None
 
+
     return {
-        "id": row["id"],
-        "username": row["username"],
-        "password": row["password"],
-        "is_admin": row["is_admin"],
+        "id": row[0],
+        "username": row[1],
+        "password": row[2],
+        "role": row[3],
     }
 
 
-def create_user(username: str, password: str, is_admin: bool = False):
+def create_user(username: str, password: str, role: str = False):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO users (username, password, is_admin) VALUES (%s, %s, %s)",
-        (username, password, is_admin)
+        "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
+        (username, password, role)
     )
 
     conn.commit()
     cursor.close()
     conn.close()
+
+
+print("CURD module loaded")
